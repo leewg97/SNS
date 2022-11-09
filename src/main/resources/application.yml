@@ -1,0 +1,13 @@
+spring:
+
+  jpa:
+    show-sql: true
+    database: postgresql
+    defer-datasource-initialization: true
+    hibernate:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
