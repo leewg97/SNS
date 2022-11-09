@@ -25,6 +25,12 @@ public class UserService {
     @Value("${jwt.token.expired-time-ms}")
     private Long expiredTimeMs;
 
+    public User loadUserByUsername(String username) {
+        return userEntityRepository.findByUsername(username).map(User::fromEntity).orElseThrow(
+                () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", username))
+        );
+    }
+
     public User join(String username, String password) {
         userEntityRepository.findByUsername(username).ifPresent(it -> {
             throw new SnsApplicationException(ErrorCode.DUPLICATED_USERNAME, String.format("%s is duplicated", username));
@@ -45,7 +51,5 @@ public class UserService {
 
         return JwtTokenUtils.generateToken(username, secretKey, expiredTimeMs);
     }
-
-
 
 }
