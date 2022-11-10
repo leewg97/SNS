@@ -38,7 +38,7 @@ public class UserServiceTest {
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(password)).thenReturn("encrypt_password");
-        when(userEntityRepository.save(any())).thenReturn(UserEntityFixture.get(username, password));
+        when(userEntityRepository.save(any())).thenReturn(UserEntityFixture.get(username, password, 1L));
 
         assertDoesNotThrow(() -> userService.join(username, password));
     }
@@ -48,7 +48,7 @@ public class UserServiceTest {
     void joinFail() {
         String username = "username";
         String password = "password";
-        UserEntity fixture = UserEntityFixture.get(username, password);
+        UserEntity fixture = UserEntityFixture.get(username, password, 1L);
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
         when(passwordEncoder.encode(password)).thenReturn("encrypt_password");
@@ -65,7 +65,7 @@ public class UserServiceTest {
         String username = "username";
         String password = "password";
 
-        UserEntity fixture = UserEntityFixture.get(username, password);
+        UserEntity fixture = UserEntityFixture.get(username, password, 1L);
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
         when(passwordEncoder.matches(password, fixture.getPassword())).thenReturn(true);
@@ -92,7 +92,7 @@ public class UserServiceTest {
         String password = "password";
         String wrongPass = "wrongPass";
 
-        UserEntity fixture = UserEntityFixture.get(username, password);
+        UserEntity fixture = UserEntityFixture.get(username, password, 1L);
 
         when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(fixture));
 
