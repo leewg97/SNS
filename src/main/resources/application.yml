@@ -1,5 +1,8 @@
 spring:
 
+  main:
+    allow-circular-references: true
+
   jpa:
     show-sql: true
     database: postgresql
@@ -11,3 +14,15 @@ spring:
       hibernate:
         format_sql: true
 
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+    url: jdbc:postgresql://ec2-54-225-234-165.compute-1.amazonaws.com/dfn1p4u7bcemia
+    username: pqqmerssjhgyqb
+    password: 46e1d8e03b324b4c9e8eba779839793af08da2d56065b4f2d73c1b0741161bc0
+    driver-class-name: org.postgresql.Driver
+
+jwt:
+  secret-key: rkskekfkfkhx;skjh#@&$*LGhsdlgh;z&*@!#*(@ldsgkhsdg;slj
+  token:
+    expired-time-ms: 2592000000 # 30일
