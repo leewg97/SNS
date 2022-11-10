@@ -4,9 +4,12 @@ import com.wg.sns.exception.ErrorCode;
 import com.wg.sns.exception.SnsApplicationException;
 import com.wg.sns.fixture.PostEntityFixture;
 import com.wg.sns.fixture.UserEntityFixture;
+import com.wg.sns.model.Comment;
+import com.wg.sns.model.entity.CommentEntity;
 import com.wg.sns.model.entity.LikeEntity;
 import com.wg.sns.model.entity.PostEntity;
 import com.wg.sns.model.entity.UserEntity;
+import com.wg.sns.repository.CommentEntityRepository;
 import com.wg.sns.repository.LikeEntityRepository;
 import com.wg.sns.repository.PostEntityRepository;
 import com.wg.sns.repository.UserEntityRepository;
@@ -39,6 +42,8 @@ public class PostServiceTest {
     private UserEntityRepository userEntityRepository;
     @MockBean
     private LikeEntityRepository likeEntityRepository;
+    @MockBean
+    private CommentEntityRepository commentEntityRepository;
 
     @DisplayName("포스트 작성이 성공한 경우")
     @Test
@@ -247,6 +252,73 @@ public class PostServiceTest {
         Assertions.assertThat(actual).isEqualTo(1L);
         then(postEntityRepository).should().findById(postId);
         then(likeEntityRepository).should().countByPostEntity(postEntity);
+    }
+
+    @DisplayName("댓글 작성 성공한 경우")
+    @Test
+    void commentRegisterSuccessful() {
+        // given
+        String username = "username";
+        Long postId = 1L;
+        Long userId = 1L;
+        PostEntity postEntity = PostEntityFixture.get(username, postId, userId);
+        UserEntity userEntity = UserEntityFixture.get(username, "password", userId);
+
+        given(userEntityRepository.findByUsername(username)).willReturn(Optional.of(userEntity));
+        given(postEntityRepository.findById(postId)).willReturn(Optional.of(postEntity));
+        given(commentEntityRepository.save(any(CommentEntity.class))).willReturn(any(CommentEntity.class));
+
+        // when
+        postService.comment(postId, "comment", username);
+
+        // then
+        then(userEntityRepository).should().findByUsername(username);
+        then(postEntityRepository).should().findById(postId);
+        then(commentEntityRepository).should().save(any(CommentEntity.class));
+    }
+
+    @DisplayName("댓글 작성 시 포스트가 없는 경우")
+    @Test
+    void thePostIdYouWantToCommentDoesNotExist() {
+        // given
+        String username = "username";
+        Long postId = 1L;
+        Long userId = 1L;
+        PostEntity postEntity = PostEntityFixture.get(username, postId, userId);
+
+        given(userEntityRepository.findByUsername(username)).willReturn(Optional.of(postEntity.getUserEntity()));
+        given(postEntityRepository.findById(postId)).willReturn(Optional.empty());
+
+        // when & then
+        SnsApplicationException e = assertThrows(SnsApplicationException.class, () -> postService.comment(postId, "comment", username));
+        Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.POST_NOT_FOUND);
+
+        then(userEntityRepository).should().findByUsername(username);
+        then(postEntityRepository).should().findById(postId);
+        then(commentEntityRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("댓글 목록 요청 성공한 경우")
+    @Test
+    void requestCommentListSuccessful() {
+        // given
+        String username = "username";
+        Long postId = 1L;
+        Long userId = 1L;
+        PostEntity postEntity = PostEntityFixture.get(username, postId, userId);
+        Pageable pageable = mock(Pageable.class);
+
+        given(postEntityRepository.findById(postId)).willReturn(Optional.of(postEntity));
+        given(commentEntityRepository.findAllByPostEntity(postEntity, pageable)).willReturn(Page.empty());
+
+        // when
+        Page<Comment> comments = postService.getComments(postId, pageable);
+
+        // then
+        Assertions.assertThat(comments).hasSize(0);
+
+        then(postEntityRepository).should().findById(postId);
+        then(commentEntityRepository).should().findAllByPostEntity(postEntity, pageable);
     }
 
 }
