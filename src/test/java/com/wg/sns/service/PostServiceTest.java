@@ -13,11 +13,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -159,8 +162,22 @@ public class PostServiceTest {
         assertEquals(ErrorCode.INVALID_PERMISSION, e.getErrorCode());
     }
 
+    @DisplayName("포스트 목록 요청 성공한 경우")
+    @Test
+    void requestPostListSuccessful() {
+        Pageable pageable = mock(Pageable.class);
+        when(postEntityRepository.findAll(pageable)).thenReturn(Page.empty());
+        assertDoesNotThrow(() -> postService.list(pageable));
+    }
 
-
-
+    @DisplayName("내 포스트 목록 요청 성공한 경우")
+    @Test
+    void requestMyPostListSuccessful() {
+        Pageable pageable = mock(Pageable.class);
+        UserEntity userEntity = mock(UserEntity.class);
+        when(userEntityRepository.findByUsername(userEntity.getUsername())).thenReturn(Optional.of(userEntity));
+        when(postEntityRepository.findAllByUserEntity(any(), eq(pageable))).thenReturn(Page.empty());
+        assertDoesNotThrow(() -> postService.myList(userEntity.getUsername(), pageable));
+    }
 
 }
