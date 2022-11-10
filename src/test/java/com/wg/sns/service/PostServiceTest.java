@@ -4,10 +4,13 @@ import com.wg.sns.exception.ErrorCode;
 import com.wg.sns.exception.SnsApplicationException;
 import com.wg.sns.fixture.PostEntityFixture;
 import com.wg.sns.fixture.UserEntityFixture;
+import com.wg.sns.model.entity.LikeEntity;
 import com.wg.sns.model.entity.PostEntity;
 import com.wg.sns.model.entity.UserEntity;
+import com.wg.sns.repository.LikeEntityRepository;
 import com.wg.sns.repository.PostEntityRepository;
 import com.wg.sns.repository.UserEntityRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -33,6 +37,8 @@ public class PostServiceTest {
     private PostEntityRepository postEntityRepository;
     @MockBean
     private UserEntityRepository userEntityRepository;
+    @MockBean
+    private LikeEntityRepository likeEntityRepository;
 
     @DisplayName("포스트 작성이 성공한 경우")
     @Test
@@ -178,6 +184,69 @@ public class PostServiceTest {
         when(userEntityRepository.findByUsername(userEntity.getUsername())).thenReturn(Optional.of(userEntity));
         when(postEntityRepository.findAllByUserEntity(any(), eq(pageable))).thenReturn(Page.empty());
         assertDoesNotThrow(() -> postService.myList(userEntity.getUsername(), pageable));
+    }
+
+    @DisplayName("좋아요 버튼 클릭이 성공한 경우")
+    @Test
+    void requestLikeSuccessful() {
+        // when
+        String username = "username";
+        Long postId = 1L;
+        PostEntity postEntity = PostEntityFixture.get(username, postId, 1L);
+
+        when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(postEntity.getUserEntity()));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postEntity));
+        when(likeEntityRepository.findByUserEntityAndPostEntity(postEntity.getUserEntity(), postEntity)).thenReturn(Optional.empty());
+
+        // when
+        postService.like(postId, username);
+
+        // then
+        then(userEntityRepository).should().findByUsername(username);
+        then(postEntityRepository).should().findById(postId);
+        then(likeEntityRepository).should().findByUserEntityAndPostEntity(postEntity.getUserEntity(), postEntity);
+    }
+
+    @DisplayName("좋아요 버튼 이미 클릭한 경우")
+    @Test
+    void likeIsAlreadyExist() {
+        // when
+        String username = "username";
+        Long postId = 1L;
+        PostEntity postEntity = PostEntityFixture.get(username, postId, 1L);
+        LikeEntity likeEntity = LikeEntity.of(postEntity.getUserEntity(), postEntity);
+
+        when(userEntityRepository.findByUsername(username)).thenReturn(Optional.of(postEntity.getUserEntity()));
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postEntity));
+        when(likeEntityRepository.findByUserEntityAndPostEntity(postEntity.getUserEntity(), postEntity)).thenReturn(Optional.of(likeEntity));
+
+        // when & then
+        SnsApplicationException e = assertThrows(SnsApplicationException.class, () -> postService.like(postId, username));
+
+        Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.ALREADY_LIKED);
+        then(userEntityRepository).should().findByUsername(username);
+        then(postEntityRepository).should().findById(postId);
+        then(likeEntityRepository).should().findByUserEntityAndPostEntity(postEntity.getUserEntity(), postEntity);
+    }
+
+    @DisplayName("포스트의 총 좋아요 개수 요청 성공한 경우")
+    @Test
+    void requestLikeCountSuccessful() {
+        // when
+        String username = "username";
+        Long postId = 1L;
+        PostEntity postEntity = PostEntityFixture.get(username, postId, 1L);
+
+        when(postEntityRepository.findById(postId)).thenReturn(Optional.of(postEntity));
+        when(likeEntityRepository.countByPostEntity(postEntity)).thenReturn(1L);
+
+        // when
+        long actual = postService.likeCount(postId);
+
+        // then
+        Assertions.assertThat(actual).isEqualTo(1L);
+        then(postEntityRepository).should().findById(postId);
+        then(likeEntityRepository).should().countByPostEntity(postEntity);
     }
 
 }
