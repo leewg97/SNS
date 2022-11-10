@@ -3,15 +3,11 @@ package com.wg.sns.service;
 import com.wg.sns.exception.ErrorCode;
 import com.wg.sns.exception.SnsApplicationException;
 import com.wg.sns.model.Comment;
+import com.wg.sns.model.NotificationArgs;
+import com.wg.sns.model.NotificationType;
 import com.wg.sns.model.Post;
-import com.wg.sns.model.entity.CommentEntity;
-import com.wg.sns.model.entity.LikeEntity;
-import com.wg.sns.model.entity.PostEntity;
-import com.wg.sns.model.entity.UserEntity;
-import com.wg.sns.repository.CommentEntityRepository;
-import com.wg.sns.repository.LikeEntityRepository;
-import com.wg.sns.repository.PostEntityRepository;
-import com.wg.sns.repository.UserEntityRepository;
+import com.wg.sns.model.entity.*;
+import com.wg.sns.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +23,7 @@ public class PostService {
     private final UserEntityRepository userEntityRepository;
     private final LikeEntityRepository likeEntityRepository;
     private final CommentEntityRepository commentEntityRepository;
+    private final NotificationEntityRepository notificationEntityRepository;
 
     public void create(String title, String body, String username) {
         UserEntity userEntity = getUserEntity(username);
@@ -78,6 +75,7 @@ public class PostService {
         });
 
         likeEntityRepository.save(LikeEntity.of(userEntity, postEntity));
+        notificationEntityRepository.save(NotificationEntity.of(postEntity.getUserEntity(), NotificationType.NEW_LIKE_ON_POST, new NotificationArgs(userEntity.getId(), postEntity.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -90,6 +88,7 @@ public class PostService {
         UserEntity userEntity = getUserEntity(username);
         PostEntity postEntity = getPostEntity(postId);
         commentEntityRepository.save(CommentEntity.of(userEntity, postEntity, comment));
+        notificationEntityRepository.save(NotificationEntity.of(postEntity.getUserEntity(), NotificationType.NEW_COMMENT_ON_POST, new NotificationArgs(userEntity.getId(), postEntity.getId())));
     }
 
     public Page<Comment> getComments(Long postId, Pageable pageable) {
