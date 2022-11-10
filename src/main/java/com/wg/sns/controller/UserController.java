@@ -2,15 +2,16 @@ package com.wg.sns.controller;
 
 import com.wg.sns.controller.request.UserJoinRequest;
 import com.wg.sns.controller.request.UserLoginRequest;
+import com.wg.sns.controller.response.NotificationResponse;
 import com.wg.sns.controller.response.Response;
 import com.wg.sns.controller.response.UserJoinResponse;
 import com.wg.sns.controller.response.UserLoginResponse;
 import com.wg.sns.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +28,11 @@ public class UserController {
     @PostMapping("/login")
     public Response<UserLoginResponse> login(@RequestBody UserLoginRequest request) {
         return Response.success(new UserLoginResponse(userService.login(request.getName(), request.getPassword())));
+    }
+
+    @GetMapping("/notify")
+    public Response<Page<NotificationResponse>> notificationList(Pageable pageable, Authentication authentication) {
+        return Response.success(userService.notificationList(authentication.getName(), pageable).map(NotificationResponse::fromNotification));
     }
 
 }
