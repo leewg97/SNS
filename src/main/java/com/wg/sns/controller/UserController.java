@@ -21,12 +21,12 @@ public class UserController {
 
     @PostMapping("/join")
     public Response<UserJoinResponse> join(@RequestBody UserJoinRequest request) {
-        return Response.success(UserJoinResponse.fromUser(userService.join(request.getUsername(), request.getPassword())));
+        return Response.success(UserJoinResponse.fromUser(userService.join(request.getName(), request.getPassword())));
     }
 
     @PostMapping("/login")
     public Response<UserLoginResponse> login(@RequestBody UserLoginRequest request) {
-        return Response.success(new UserLoginResponse(userService.login(request.getUsername(), request.getPassword())));
+        return Response.success(new UserLoginResponse(userService.login(request.getName(), request.getPassword())));
     }
 
 }
