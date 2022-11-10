@@ -53,9 +53,9 @@ public class UserEntity {
         this.updatedAt = Timestamp.from(Instant.now());
     }
 
-    public static UserEntity of(String userName, String password) {
+    public static UserEntity of(String username, String password) {
         UserEntity userEntity = new UserEntity();
-        userEntity.setUsername(userName);
+        userEntity.setUsername(username);
         userEntity.setPassword(password);
         return userEntity;
     }

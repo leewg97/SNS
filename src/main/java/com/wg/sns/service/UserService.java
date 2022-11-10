@@ -2,12 +2,16 @@ package com.wg.sns.service;
 
 import com.wg.sns.exception.ErrorCode;
 import com.wg.sns.exception.SnsApplicationException;
+import com.wg.sns.model.Notification;
 import com.wg.sns.model.User;
 import com.wg.sns.model.entity.UserEntity;
+import com.wg.sns.repository.NotificationEntityRepository;
 import com.wg.sns.repository.UserEntityRepository;
 import com.wg.sns.util.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserEntityRepository userEntityRepository;
+    private final NotificationEntityRepository notificationEntityRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret-key}")
@@ -50,6 +55,14 @@ public class UserService {
         }
 
         return JwtTokenUtils.generateToken(username, secretKey, expiredTimeMs);
+    }
+
+    public Page<Notification> notificationList(String username, Pageable pageable) {
+        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(
+                () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username))
+        );
+
+        return notificationEntityRepository.findAllByUserEntity(userEntity, pageable).map(Notification::fromEntity);
     }
 
 }

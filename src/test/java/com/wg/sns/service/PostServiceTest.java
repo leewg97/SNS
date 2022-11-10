@@ -5,14 +5,8 @@ import com.wg.sns.exception.SnsApplicationException;
 import com.wg.sns.fixture.PostEntityFixture;
 import com.wg.sns.fixture.UserEntityFixture;
 import com.wg.sns.model.Comment;
-import com.wg.sns.model.entity.CommentEntity;
-import com.wg.sns.model.entity.LikeEntity;
-import com.wg.sns.model.entity.PostEntity;
-import com.wg.sns.model.entity.UserEntity;
-import com.wg.sns.repository.CommentEntityRepository;
-import com.wg.sns.repository.LikeEntityRepository;
-import com.wg.sns.repository.PostEntityRepository;
-import com.wg.sns.repository.UserEntityRepository;
+import com.wg.sns.model.entity.*;
+import com.wg.sns.repository.*;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +38,8 @@ public class PostServiceTest {
     private LikeEntityRepository likeEntityRepository;
     @MockBean
     private CommentEntityRepository commentEntityRepository;
+    @MockBean
+    private NotificationEntityRepository notificationEntityRepository;
 
     @DisplayName("포스트 작성이 성공한 경우")
     @Test
@@ -210,6 +206,7 @@ public class PostServiceTest {
         then(userEntityRepository).should().findByUsername(username);
         then(postEntityRepository).should().findById(postId);
         then(likeEntityRepository).should().findByUserEntityAndPostEntity(postEntity.getUserEntity(), postEntity);
+        then(notificationEntityRepository).should().save(any(NotificationEntity.class));
     }
 
     @DisplayName("좋아요 버튼 이미 클릭한 경우")
@@ -275,6 +272,7 @@ public class PostServiceTest {
         then(userEntityRepository).should().findByUsername(username);
         then(postEntityRepository).should().findById(postId);
         then(commentEntityRepository).should().save(any(CommentEntity.class));
+        then(notificationEntityRepository).should().save(any(NotificationEntity.class));
     }
 
     @DisplayName("댓글 작성 시 포스트가 없는 경우")
