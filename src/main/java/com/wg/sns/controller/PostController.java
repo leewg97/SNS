@@ -1,7 +1,9 @@
 package com.wg.sns.controller;
 
+import com.wg.sns.controller.request.PostCommentRequest;
 import com.wg.sns.controller.request.PostCreateRequest;
 import com.wg.sns.controller.request.PostModifyRequest;
+import com.wg.sns.controller.response.CommentResponse;
 import com.wg.sns.controller.response.PostResponse;
 import com.wg.sns.controller.response.Response;
 import com.wg.sns.service.PostService;
@@ -52,8 +54,19 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/likes")
-    public Response<Long> likeCount(@PathVariable Long postId, Authentication authentication) {
+    public Response<Long> likeCount(@PathVariable Long postId) {
         return Response.success(postService.likeCount(postId));
+    }
+
+    @PostMapping("/{postId}/comments")
+    public Response<Void> comment(@PathVariable Long postId, @RequestBody PostCommentRequest request, Authentication authentication) {
+        postService.comment(postId, request.getComment(), authentication.getName());
+        return Response.success();
+    }
+
+    @GetMapping("/{postId}/comments")
+    public Response<Page<CommentResponse>> getComments(@PathVariable Long postId, Pageable pageable) {
+        return Response.success(postService.getComments(postId, pageable).map(CommentResponse::fromComment));
     }
 
 }
