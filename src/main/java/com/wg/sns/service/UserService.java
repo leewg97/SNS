@@ -57,12 +57,9 @@ public class UserService {
         return JwtTokenUtils.generateToken(username, secretKey, expiredTimeMs);
     }
 
-    public Page<Notification> notificationList(String username, Pageable pageable) {
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(
-                () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username))
-        );
-
-        return notificationEntityRepository.findAllByUserEntity(userEntity, pageable).map(Notification::fromEntity);
+    @Transactional(readOnly = true)
+    public Page<Notification> notificationList(Long userId, Pageable pageable) {
+        return notificationEntityRepository.findAllByUserEntityId(userId, pageable).map(Notification::fromEntity);
     }
 
 }
