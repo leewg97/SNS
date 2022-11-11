@@ -52,6 +52,8 @@ public class PostService {
             throw new SnsApplicationException(ErrorCode.INVALID_PERMISSION, String.format("%s has no permission with %s", username, postId));
         }
 
+        likeEntityRepository.deleteAllByPost(postEntity);
+        commentEntityRepository.deleteAllByPost(postEntity);
         postEntityRepository.delete(postEntity);
     }
 
@@ -91,6 +93,7 @@ public class PostService {
         notificationEntityRepository.save(NotificationEntity.of(postEntity.getUserEntity(), NotificationType.NEW_COMMENT_ON_POST, new NotificationArgs(userEntity.getId(), postEntity.getId())));
     }
 
+    @Transactional(readOnly = true)
     public Page<Comment> getComments(Long postId, Pageable pageable) {
         PostEntity postEntity = getPostEntity(postId);
         return commentEntityRepository.findAllByPostEntity(postEntity, pageable).map(Comment::fromEntity);
