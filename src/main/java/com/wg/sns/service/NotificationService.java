@@ -2,7 +2,13 @@ package com.wg.sns.service;
 
 import com.wg.sns.exception.ErrorCode;
 import com.wg.sns.exception.SnsApplicationException;
+import com.wg.sns.model.NotificationArgs;
+import com.wg.sns.model.NotificationType;
+import com.wg.sns.model.entity.NotificationEntity;
+import com.wg.sns.model.entity.UserEntity;
 import com.wg.sns.repository.EmitterRepository;
+import com.wg.sns.repository.NotificationEntityRepository;
+import com.wg.sns.repository.UserEntityRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +24,8 @@ public class NotificationService {
     private final static Long DEFAULT_TIMEOUT = 60L * 1000 * 60;
     private final static String NOTIFICATION_NAME = "notify";
     private final EmitterRepository emitterRepository;
+    private final NotificationEntityRepository notificationEntityRepository;
+    private final UserEntityRepository userEntityRepository;
 
     public SseEmitter connectNotify(Long userId) {
         SseEmitter sseEmitter = new SseEmitter(DEFAULT_TIMEOUT);
@@ -34,12 +42,18 @@ public class NotificationService {
         return sseEmitter;
     }
 
-    public void send(Long notificationId, Long userId) {
-        emitterRepository.get(userId).ifPresentOrElse(sseEmitter -> {
+    public void send(NotificationType notificationType, NotificationArgs notificationArgs, Long receiverUserId) {
+        UserEntity userEntity = userEntityRepository.findById(receiverUserId).orElseThrow(
+                () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(userEntity, notificationType, notificationArgs));
+
+        emitterRepository.get(receiverUserId).ifPresentOrElse(sseEmitter -> {
             try {
-                sseEmitter.send(SseEmitter.event().id(notificationId.toString()).name(NOTIFICATION_NAME).data("new notification"));
+                sseEmitter.send(SseEmitter.event().id(notificationEntity.getId().toString()).name(NOTIFICATION_NAME).data("new notification"));
             } catch (IOException e) {
-                emitterRepository.delete(userId);
+                emitterRepository.delete(receiverUserId);
                 throw new SnsApplicationException(ErrorCode.NOTIFICATION_CONNECT_ERROR);
             }
         }, () -> log.info("No emitter founded"));
