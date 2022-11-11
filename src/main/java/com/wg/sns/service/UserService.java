@@ -6,6 +6,7 @@ import com.wg.sns.model.Notification;
 import com.wg.sns.model.User;
 import com.wg.sns.model.entity.UserEntity;
 import com.wg.sns.repository.NotificationEntityRepository;
+import com.wg.sns.repository.UserCacheRepository;
 import com.wg.sns.repository.UserEntityRepository;
 import com.wg.sns.util.JwtTokenUtils;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class UserService {
     private final UserEntityRepository userEntityRepository;
     private final NotificationEntityRepository notificationEntityRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserCacheRepository userCacheRepository;
 
     @Value("${jwt.secret-key}")
     private String secretKey;
@@ -31,9 +33,10 @@ public class UserService {
     private Long expiredTimeMs;
 
     public User loadUserByUsername(String username) {
-        return userEntityRepository.findByUsername(username).map(User::fromEntity).orElseThrow(
-                () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", username))
-        );
+        return userCacheRepository.getUser(username).orElseGet(
+                () -> userEntityRepository.findByUsername(username).map(User::fromEntity).orElseThrow(
+                        () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not founded", username))
+                ));
     }
 
     public User join(String username, String password) {
@@ -46,11 +49,10 @@ public class UserService {
     }
 
     public String login(String username, String password) {
-        UserEntity userEntity = userEntityRepository.findByUsername(username).orElseThrow(
-                () -> new SnsApplicationException(ErrorCode.USER_NOT_FOUND, String.format("%s not found", username))
-        );
+        User user = loadUserByUsername(username);
+        userCacheRepository.setUser(user);
 
-        if (!passwordEncoder.matches(password, userEntity.getPassword())) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new SnsApplicationException(ErrorCode.INVALID_PASSWORD);
         }
 
