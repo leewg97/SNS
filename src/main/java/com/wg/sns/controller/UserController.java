@@ -6,7 +6,11 @@ import com.wg.sns.controller.response.NotificationResponse;
 import com.wg.sns.controller.response.Response;
 import com.wg.sns.controller.response.UserJoinResponse;
 import com.wg.sns.controller.response.UserLoginResponse;
+import com.wg.sns.exception.ErrorCode;
+import com.wg.sns.exception.SnsApplicationException;
+import com.wg.sns.model.User;
 import com.wg.sns.service.UserService;
+import com.wg.sns.util.ClassUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +36,10 @@ public class UserController {
 
     @GetMapping("/notify")
     public Response<Page<NotificationResponse>> notificationList(Pageable pageable, Authentication authentication) {
-        return Response.success(userService.notificationList(authentication.getName(), pageable).map(NotificationResponse::fromNotification));
+        User user = ClassUtils.getSafeCastInstance(authentication.getPrincipal(), User.class).orElseThrow(
+                () -> new SnsApplicationException(ErrorCode.INTERNAL_SERVER_ERROR, "Casting to User class failed")
+        );
+        return Response.success(userService.notificationList(user.getId(), pageable).map(NotificationResponse::fromNotification));
     }
 
 }
