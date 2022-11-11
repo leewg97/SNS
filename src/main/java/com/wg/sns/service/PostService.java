@@ -24,6 +24,7 @@ public class PostService {
     private final LikeEntityRepository likeEntityRepository;
     private final CommentEntityRepository commentEntityRepository;
     private final NotificationEntityRepository notificationEntityRepository;
+    private final NotificationService notificationService;
 
     public void create(String title, String body, String username) {
         UserEntity userEntity = getUserEntity(username);
@@ -77,7 +78,8 @@ public class PostService {
         });
 
         likeEntityRepository.save(LikeEntity.of(userEntity, postEntity));
-        notificationEntityRepository.save(NotificationEntity.of(postEntity.getUserEntity(), NotificationType.NEW_LIKE_ON_POST, new NotificationArgs(userEntity.getId(), postEntity.getId())));
+        NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(postEntity.getUserEntity(), NotificationType.NEW_LIKE_ON_POST, new NotificationArgs(userEntity.getId(), postEntity.getId())));
+        notificationService.send(notificationEntity.getId(), postEntity.getId());
     }
 
     @Transactional(readOnly = true)
@@ -90,7 +92,8 @@ public class PostService {
         UserEntity userEntity = getUserEntity(username);
         PostEntity postEntity = getPostEntity(postId);
         commentEntityRepository.save(CommentEntity.of(userEntity, postEntity, comment));
-        notificationEntityRepository.save(NotificationEntity.of(postEntity.getUserEntity(), NotificationType.NEW_COMMENT_ON_POST, new NotificationArgs(userEntity.getId(), postEntity.getId())));
+        NotificationEntity notificationEntity = notificationEntityRepository.save(NotificationEntity.of(postEntity.getUserEntity(), NotificationType.NEW_COMMENT_ON_POST, new NotificationArgs(userEntity.getId(), postEntity.getId())));
+        notificationService.send(notificationEntity.getId(), postEntity.getId());
     }
 
     @Transactional(readOnly = true)
