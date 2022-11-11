@@ -25,7 +25,29 @@ spring:
   redis:
     url: redis://:p8c90a3e176486a4e393032ccf5e4e061937f1607e4843d1890911a11cecec48f@ec2-44-212-171-11.compute-1.amazonaws.com:26849
 
+  kafka:
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: SCRAM-SHA-256
+      sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="1uojuh6b" password="3SQtDIumzYAvAtSGeYmNNC46VtJCY_ZX";
+    consumer:
+      properties.spring.json.trusted.packages: "*"  # Json으로 변환할 때(serialize, deserialize) 어떤 패키지를 허용
+      bootstrap-servers: dory-01.srvs.cloudkafka.com:9094, dory-02.srvs.cloudkafka.com:9094, dory-03.srvs.cloudkafka.com:9094
+      group-id: notification                        # consumer group id
+      auto-offset-reset: latest                     # consumer 가 어디서부터 정보를 읽을 것인가
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      ack-mode: MANUAL
+    producer:
+      bootstrap-servers: dory-01.srvs.cloudkafka.com:9094, dory-02.srvs.cloudkafka.com:9094, dory-03.srvs.cloudkafka.com:9094
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties.enable.idempotence: false          # karafka를 위한 설정
+    topic:
+      notification: 1uojuh6b-notification
+
 jwt:
   secret-key: rkskekfkfkhx;skjh#@&$*LGhsdlgh;z&*@!#*(@ldsgkhsdg;slj
   token:
-    expired-time-ms: 2592000000 # 30일
+    expired-time-ms: 2592000000                       # 30일
