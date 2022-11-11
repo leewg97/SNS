@@ -27,7 +27,8 @@ public class JwtSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return web -> web.ignoring().regexMatchers("^(?!/api/).*");
+        return web -> web.ignoring().regexMatchers("^(?!/api/).*")
+                .antMatchers("/api/*/users/join", "/api/*/users/login");
     }
 
     @Bean
@@ -39,7 +40,6 @@ public class JwtSecurityConfig {
 
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/*/users/join", "/api/*/users/login").permitAll()
                 .antMatchers("/api/**")
                 .authenticated()
 
